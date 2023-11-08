@@ -4,7 +4,7 @@ bits 16
 start: jmp boot
 
 ;; Definizioni di variabili e costanti
-msg db "Benvenuto in mmOS!", 0
+msg db "Benvenuto in mmOS, prova comm!", 0
 
 ;; Processo di boot
 boot:
