@@ -1,7 +1,8 @@
 ; Bootloader generico
-org 0x7c00
+;;org 0x7c00
 bits 16
-start: jmp boot
+start:
+    jmp boot
 
 ;; Definizioni di variabili e costanti
 msg db "Benvenuto in mmOS!", 0
@@ -53,14 +54,14 @@ print_string:
 ;; Flag per stampare carattere
 ;; per carattere
 .repeat_next_char:
-        lodsb               ; Ottengo il carattere dalla stringa
-        cmp al, 0           ; Verifico se siamo arrivati alla
+    lodsb                   ; Ottengo il carattere dalla stringa
+    cmp al, 0               ; Verifico se siamo arrivati alla
                             ; fine della stringa
 
-        je .done_print      ; Se il carattere è 0, la stringa
+    je .done_print          ; Se il carattere è 0, la stringa
                             ; è finita
 
-        int 0x10            ; Codice di interrupt per la stampa
+    int 0x10                ; Codice di interrupt per la stampa
                             ; del carattere dal registro "al"
 
     jmp .repeat_next_char   ; Se non è 0 ripeto la stampa
