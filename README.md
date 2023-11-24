@@ -1,2 +1,2 @@
-# mmOS
-Sistema operativo personale
+# testOS
+Sistema operativo personale di test
