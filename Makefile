@@ -1,40 +1,48 @@
-# Autore: Manuel Millefiori
-# Data: 2023-11-07
+ASM=nasm
 
-# Costanti
+SRC_DIR=src
 BUILD_DIR=build
-BOOTLOADER=$(BUILD_DIR)/bootloader/bootloader.o
-OS=$(BUILD_DIR)/os/sample.o
-DISK_IMG=disk.img
 
-all: bootdisk
+.PHONY: all floppy_image kernel bootloader clean always
 
-.PHONY: bootdisk bootloader os
+#
+# Floppy image
+#
+floppy_image: $(BUILD_DIR)/main_floppy.img
 
-# Comando per l'avvio di qemu
-qemu:
-	/opt/qemu-8.1.2/build/qemu-system-i386 -machine q35 -fda $(DISK_IMG) -gdb tcp::26000 -S
+$(BUILD_DIR)/main_floppy.img: bootloader kernel
+	dd if=/dev/zero of=$(BUILD_DIR)/main_floppy.img bs=512 count=2880
+	mkfs.fat -F 12 -n "NBOS" $(BUILD_DIR)/main_floppy.img
+	dd if=$(BUILD_DIR)/bootloader.bin of=$(BUILD_DIR)/main_floppy.img conv=notrunc
+	mcopy -i $(BUILD_DIR)/main_floppy.img $(BUILD_DIR)/kernel.bin "::kernel.bin"
 
-bootloader:
-	make -C bootloader
 
-os:
-	make -C os
+#
+# Bootloader
+#
+bootloader: $(BUILD_DIR)/bootloader.bin
 
-bootdisk: bootloader os
-	# Preinizializzo lo spazio di allocazione
-	# per il bootloader ed il kernel
-	dd if=/dev/zero of=$(DISK_IMG) bs=512 count=2880
+$(BUILD_DIR)/bootloader.bin: always
+	$(ASM) $(SRC_DIR)/bootloader/boot.asm -f bin -o $(BUILD_DIR)/bootloader.bin
 
-	# Inizializzo il primo settore da 512 bytes
-	# Con il bootloader
-	dd conv=notrunc if=$(BOOTLOADER) of=$(DISK_IMG) bs=512 count=1 seek=0
 
-	# Inizializzo il secondo settore da 512 bytes
-	# Con il kernel
-	dd conv=notrunc if=$(OS) of=$(DISK_IMG) bs=512 count=1 seek=1
+#
+# Kernel
+#
+kernel: $(BUILD_DIR)/kernel.bin
 
+
+$(BUILD_DIR)/kernel.bin: always
+	$(ASM) $(SRC_DIR)/kernel/main.asm -f bin -o $(BUILD_DIR)/kernel.bin
+
+#
+# Always
+#
+always:
+	mkdir -p $(BUILD_DIR)
+
+#
+# Clean
+#
 clean:
-	make -C bootloader clean
-	make -C os clean
-
+	rm -rf $(BUILD_DIR)/*
